@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+     <meta charset="utf-8">
+     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+     <title>學會歷史時間軸</title>
+     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+     <link rel="stylesheet" href="https://www.tebma.org.tw/templatesClient/css/theme.css">
+     <link rel="stylesheet" href="https://www.tebma.org.tw/templatesClient/art.css">
+     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+     <style type="text/css">
+          * {
+               box-sizing: border-box;
+               margin: 0;
+               padding: 0;
+          }
+
+          body {
+               font-family: Verdana, "微軟正黑體", sans-serif;
+               font-size: 16px;
+               padding: 20px;
+          }
+
+          .cd-horizontal-timeline {
+               opacity: 1;
+               margin: 20px auto;
+               transition: opacity 0.2s;
+          }
+
+          .cd-horizontal-timeline::before {
+               content: 'mobile';
+               display: none;
+          }
+
+          .cd-horizontal-timeline.loaded {
+               opacity: 1;
+          }
+
+          .cd-horizontal-timeline .timeline {
+               position: relative;
+               height: 100px;
+               width: 100%;
+               max-width: 1000px;
+               margin: 0 auto;
+          }
+
+          .cd-horizontal-timeline .events-wrapper {
+               position: relative;
+               height: 100%;
+               margin: 0 50px;
+               overflow: hidden;
+          }
+
+          .cd-horizontal-timeline .events-wrapper::after,
+          .cd-horizontal-timeline .events-wrapper::before {
+               content: '';
+               position: absolute;
+               z-index: 2;
+               top: 0;
+               height: 100%;
+               width: 30px;
+          }
+
+          .cd-horizontal-timeline .events-wrapper::before {
+               left: 0;
+               background-image: linear-gradient(to right, #ffffff, rgba(255, 255, 255, 0));
+          }
+
+          .cd-horizontal-timeline .events-wrapper::after {
+               right: 0;
+               background-image: linear-gradient(to left, #ffffff, rgba(255, 255, 255, 0));
+          }
+
+          .cd-horizontal-timeline .events {
+               position: absolute;
+               z-index: 1;
+               left: 0;
+               top: 49px;
+               height: 2px;
+               background: #e2e8f0;
+               transition: transform 0.4s;
+          }
+
+          .cd-horizontal-timeline .filling-line {
+               position: absolute;
+               z-index: 1;
+               left: 0;
+               top: 0;
+               height: 100%;
+               width: 100%;
+               background-color: #6a60a9;
+               transform: scaleX(0);
+               transform-origin: left center;
+               transition: transform 0.3s;
+          }
+
+          .cd-horizontal-timeline .events a {
+               position: absolute;
+               bottom: 0;
+               z-index: 2;
+               text-align: center;
+               font-size: 1.4rem;
+               font-weight: 600;
+               padding-bottom: 15px;
+               color: #64748b;
+               text-decoration: none;
+               transform: translateZ(0);
+               transition: color 0.3s;
+          }
+
+          .cd-horizontal-timeline .events a:hover {
+               color: #6a60a9;
+          }
+
+          .cd-horizontal-timeline .events a::after {
+               content: '';
+               position: absolute;
+               left: 50%;
+               right: auto;
+               transform: translateX(-50%);
+               bottom: -6px;
+               height: 14px;
+               width: 14px;
+               border-radius: 50%;
+               border: 2px solid #cbd5e1;
+               background-color: #ffffff;
+               transition: background-color 0.3s, border-color 0.3s;
+          }
+
+          .no-touch .cd-horizontal-timeline .events a:hover::after {
+               background-color: #6a60a9;
+               border-color: #6a60a9;
+          }
+
+          .cd-horizontal-timeline .events a.selected {
+               pointer-events: none;
+               color: #6a60a9;
+               font-weight: 700;
+          }
+
+          .cd-horizontal-timeline .events a.selected::after {
+               background-color: #6a60a9;
+               border-color: #6a60a9;
+               box-shadow: 0 0 0 4px rgba(106, 96, 169, 0.2);
+          }
+
+          .cd-horizontal-timeline .events a.older-event::after {
+               border-color: #6a60a9;
+          }
+
+          @media only screen and (min-width: 1100px) {
+               .cd-horizontal-timeline {
+                    margin: 15px auto;
+               }
+
+               .cd-horizontal-timeline::before {
+                    content: 'desktop';
+               }
+          }
+
+          .cd-timeline-navigation a {
+               position: absolute;
+               z-index: 1;
+               top: 50%;
+               bottom: auto;
+               transform: translateY(-50%);
+               height: 36px;
+               width: 36px;
+               border-radius: 50%;
+               border: 1px solid #cbd5e1;
+               overflow: hidden;
+               color: transparent;
+               text-indent: 100%;
+               white-space: nowrap;
+               background-color: #ffffff;
+               box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+               transition: border-color 0.3s, background-color 0.3s;
+          }
+
+          .cd-timeline-navigation a::after {
+               content: '';
+               position: absolute;
+               height: 8px;
+               width: 8px;
+               left: 40%;
+               top: 50%;
+               bottom: auto;
+               right: auto;
+               border-top: 2px solid #64748b;
+               border-right: 2px solid #64748b;
+               transform: translateX(-50%) translateY(-50%) rotate(45deg);
+               transition: border-color 0.3s;
+          }
+
+          .cd-timeline-navigation a.prev {
+               left: 0;
+               transform: translateY(-50%) rotate(180deg);
+          }
+
+          .cd-timeline-navigation a.next {
+               right: 0;
+          }
+
+          .no-touch .cd-timeline-navigation a:hover {
+               border-color: #6a60a9;
+               background-color: #f8fafc;
+          }
+
+          .no-touch .cd-timeline-navigation a:hover::after {
+               border-top: 2px solid #6a60a9;
+               border-right: 2px solid #6a60a9;
+          }
+
+          .cd-timeline-navigation a.inactive {
+               cursor: not-allowed;
+               opacity: 0.3;
+               box-shadow: none;
+          }
+
+          .cd-timeline-navigation a.inactive::after {
+               border-top: 2px solid #cbd5e1 !important;
+               border-right: 2px solid #cbd5e1 !important;
+          }
+
+          .no-touch .cd-timeline-navigation a.inactive:hover {
+               border-color: #cbd5e1;
+               background-color: #ffffff;
+          }
+
+          .cd-horizontal-timeline .events-content {
+               position: relative;
+               width: 100%;
+               margin: 1.5em 0;
+               overflow: hidden;
+               transition: height 0.4s;
+          }
+
+          .cd-horizontal-timeline .events-content li {
+               position: absolute;
+               z-index: 1;
+               width: 100%;
+               left: 0;
+               top: 0;
+               transform: translateX(-100%);
+               padding: 0 24px;
+               opacity: 0;
+               animation-duration: 0.4s;
+               animation-timing-function: ease-in-out;
+               box-sizing: border-box;
+          }
+
+          .cd-horizontal-timeline .events-content li.selected {
+               position: relative;
+               z-index: 2;
+               opacity: 1;
+               transform: translateX(0);
+          }
+
+          .cd-horizontal-timeline .events-content li>* {
+               margin: 0 auto;
+          }
+
+          .cd-horizontal-timeline .events-content h2 {
+               font-size: 28px;
+               font-weight: 700;
+               line-height: 1.4;
+               color: #1e293b;
+               max-width: 900px;
+               margin: 0 auto 24px auto;
+               padding-bottom: 10px;
+               border-bottom: 2px solid #f1f5f9;
+          }
+
+          .cd-horizontal-timeline .events-content .pic_box {
+               margin: 0 auto 24px auto;
+               max-width: 600px;
+               text-align: center;
+               background-color: #f8fafc;
+               padding: 10px;
+               border-radius: 8px;
+               box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+               border: 1px solid #e2e8f0;
+          }
+
+          .cd-horizontal-timeline .events-content .pic_box img {
+               max-width: 100%;
+               height: auto;
+               display: inline-block;
+               border-radius: 4px;
+          }
+
+          .cd-horizontal-timeline .events-content ol {
+               margin: 0;
+               padding: 0;
+          }
+
+          .cd-horizontal-timeline .events-content p {
+               font-size: 1.5rem;
+               color: #334155;
+               max-width: 900px;
+               margin: 0 auto 18px auto;
+               text-align: justify;
+          }
+
+          .cd-horizontal-timeline .events-content em,
+          .cd-horizontal-timeline .events-content p {
+               line-height: 1.8;
+          }
+
+          .cd-horizontal-timeline .events-content p.meta_source {
+               font-size: 1.3rem;
+               color: #64748b;
+               font-style: normal;
+               border-left: 3px solid #6a60a9;
+               padding-left: 12px;
+               margin-top: 20px;
+               background-color: #f8fafc;
+               padding-top: 10px;
+               padding-bottom: 10px;
+               border-radius: 0 6px 6px 0;
+          }
+
+          .full_width {
+               width: 100%;
+          }
+
+          @media only screen and (min-width: 768px) {
+               .cd-horizontal-timeline .events-content h2 {
+                    font-size: 26px;
+               }
+
+               .cd-horizontal-timeline .events-content p {
+                    font-size: 1.6rem;
+               }
+          }
+     </style>
+</head>
+
+<body>
+
+
+     <section class="cd-horizontal-timeline">
+          <div class="timeline">
+               <div class="events-wrapper">
+                    <div class="events">
+                         <ol>loading...</ol>
+                         <span class="filling-line" aria-hidden="true"></span>
+                    </div>
+               </div>
+
+               <ul class="cd-timeline-navigation">
+                    <li><a href="#0" class="prev inactive">Prev</a></li>
+                    <li><a href="#0" class="next">Next</a></li>
+               </ul>
+          </div>
+
+          <div class="events-content">
+               <ol>
+                    <li class="selected" data-index="0">
+                         <h2 data-year="2003">起源</h2>
+                         <p>
+                              這一切的起點，源於郭耿南教授對實證醫學的熱忱與願景。2003年，郭教授從海外滿懷理想返國，他深信實證醫學將為台灣醫療照護開啟嶄新的視野。
+                         </p>
+                         <p>
+                              2005年開始，時任國家衛生研究院政策研發中心的郭耿南主任為了探討台灣醫師、護理師、藥劑師、復健師、以及其他醫事人員對於EBM的認知及使用狀況，由國衛院經費中規畫一個為期5年的研究計劃。當時邱亞文研究員在國衛院服務，於是郭耿南主任邀請邱亞文研究員一同主持這個全國推廣計畫，共同推展台灣實證醫學。計畫進行時，邀集台灣學界及臨床專家進一步形成共識，奠定成立台灣實證醫學學會的方向，以更有系統性、更全方位的策略來推廣實證醫學。
+                         </p>
+                    </li>
+
+                    <li data-index="1">
+                         <h2 data-year="2007">創會：2007年8月15日「台灣實證醫學學會」成立</h2>
+                         <p>
+                              從理念萌芽到正式成立：台灣實證醫學學會的誕生
+                              早在2004年5月3日，台大醫院內科楊培銘教授取得主管機關許可設立文書 (Organizational approval by the Government)
+                              成立台灣實證醫學學會，當時定名為 Taiwan Society of Evidence-based Medicine
+                              (TSEBM)。然而，學會的發展並非一
+                              चुक而就，歷經三年的沉澱與醞釀，經過共識凝聚與全國各地的力量整合後，2007年5月8日，郭耿南教授與楊培銘教授攜手邀請了38位來自醫師、護理、藥學、復健、資訊管理及其他領域的專家聯名，共同擔任學會的發起人。同年7月，籌備會議密集展開，每一次的討論都迸發出智慧的火花，為學會的未來描繪藍圖。最終，在2007年8月15日，台灣實證醫學學會成立大會暨第一屆第一次理監事會議隆重舉行。
+                         </p>
+                         <p>
+                              2007年9月3日，台灣實證醫學學會正式獲內政部核准設立 (文號：台內社字第0960137058號)，並將英文名稱更改為 Taiwan Evidence-Based
+                              Medicine
+                              Association
+                              (TEBMA，諧音為台寶馬)，展現了台灣在實證醫學領域邁向國際的決心與信心。從此，台灣實證醫學學會承擔起推廣實證醫學、促進健康照護品質的使命，這不僅是一個組織的誕生，更彰顯TEBMA對追求卓越、以實證提升照護品質的承諾。
+                         </p>
+                         <p>
+                              <img class="full_width" src="https://sydtfrank.github.io/tebma/page_history/img/02b.jpg">
+                         </p>
+                         <div class="pic_box">
+                              <img src="https://sydtfrank.github.io/tebma/page_history/img/01.jpg">
+                         </div>
+                    </li>
+
+                    <li data-index="2">
+                         <h2 data-year="2007">創會Logo</h2>
+                         <p>
+                              實證醫學以最佳科學證據結合臨床經驗與病人價值，做出明智的醫療決策。「證據等級金字塔」成為實證醫學的象徵性框架，指引醫療從業人員根據證據的可信度，從底層的專家意見到頂端的隨機對照試驗和系統性文獻回顧，選擇最高品質的科學證據。掌握了證據等級金字塔的核心理念，就等於擁有了「實證的力量」。因此，台灣實證醫學學會的Logo以倒立的三角錐狀主體樣式設計，象徵學會從頂尖的證據出發，向外擴散科學影響力，推動健康照護進步。
+                         </p>
+                         <p>
+                              這座金字塔不僅是一個框架，更是一個精神象徵，代表實證醫學追求科學嚴謹的核心價值。從金字塔的基石到頂端，每一層都訴說著實證醫學在科學與實務上的智慧與信念，也展現了學會對推動實證醫學的堅持與願景。
+                         </p>
+                         <p>
+                              <img class="full_width"
+                                   src="https://sydtfrank.github.io/tebma/page_history/img/03_04.jpg">
+                         </p>
+                    </li>
+
+                    <li data-index="3">
+                         <h2 data-year="2007">第一屆實證醫學學會學術會議暨第一屆亞太實證醫學聯盟研討會</h2>
+                         <p>
+                              2007年11月16至18日，在台大會議中心舉辦第一屆實證醫學學會的學術會議，同時舉辦第一屆亞太實證醫學聯盟研討會 (Asia Pacific Evidence-Based
+                              Medicine
+                              Network Conference, APEBMNC)。
+                         </p>
+                         <div class="pic_box">
+                              <img src="https://sydtfrank.github.io/tebma/page_history/img/05.jpg">
+                         </div>
+                    </li>
+
+                    <li data-index="4">
+                         <h2 data-year="2008">發行Evidence Counts：2008年3月31日發行創刊號</h2>
+                         <p>
+                              Evidence Counts
+                              是台灣實證醫學學會發行的會刊，於2008年3月31日發行創刊號，伴隨著實證同好者的專業成長已走過十餘年歲月。這本由台灣實證醫學學會用心孕育的刊物，宗旨為推廣實證醫學的應用、教育及研究，旨在提升健康照護品質。期刊內容涵蓋多元面向，在這裡，您可以看到第一線醫療工作者的真實故事與寶貴經驗，感受他們運用實證醫學改善病人照護的溫暖歷程。每一期的內容都融合了紮實的學術研究與生動的實務分享，包括深入淺出的實證評論、實用的技能教學、最新的研究進展，以及來自各專業領域的經驗交流。Evidence
+                              Counts不僅是一本學術期刊，更像是一座連結理論與實務的橋樑，串起了實證同好之間珍貴的經驗與智慧，攜手為台灣的實證醫學推推廣與醫療品質共創更美好的未來。
+                         </p>
+                         <div class="pic_box">
+                              <img src="https://sydtfrank.github.io/tebma/page_history/img/06.jpg">
+                         </div>
+                    </li>
+
+                    <li data-index="5">
+                         <h2 data-year="2006-2011">實證醫學競賽</h2>
+                         <p>
+                              在國家衛生研究院的五年實證醫學推廣計畫主軸中，就有擬訂策略藉由競賽來推廣實證醫學。2006年，開始跟醫策會合作一起舉辦全國性的實證醫學競賽活動，後來TEBMA成立後就由學會跟醫策會合作來主辦競賽，乃是全球首創藉由競賽來推廣實證醫學。
+                         </p>
+                    </li>
+
+                    <li data-index="6">
+                         <h2 data-year="2013">TEBMA推廣實證醫學之學術研究</h2>
+                         <p>
+                              在國衛院的推廣實證醫學的過程中，就開始進行關於實證醫學推廣活動的研究，其中推廣的策略之一就是成立本土專業社群TEBMA來加強推廣，因此在TEBMA的協助推動之下，有顯著的增強了台灣醫療人員(包括近90家區域醫院)對於實證醫學的認知，這些藉由成立TEBMA及競賽來推廣實證醫學的研究結果都發表在國際級學術期刊。尤其是以競賽方式來推廣實證醫學為台灣首創的方法，獨步全球，也顯示TEBMA在台灣推廣實證醫學的成效是有科學根據佐證。
+                         </p>
+                         <p class="meta_source">文獻出處：Weng
+                              YH, Kuo KN, Yang CY, Liao HH, Chen C, Lo HL, Lee WC, Chiu YW. Effectiveness of national
+                              evidence-based medicine competition in Taiwan. BMC Med Educ. 2013 May 7;13:66. doi:
+                              10.1186/1472-6920-13-66. PubMed PMID: 23651869; PubMed Central PMCID: PMC3661390.
+                         </p>
+                    </li>
+
+                    <li data-index="7">
+                         <h2 data-year="2013">舉辦教學活動</h2>
+                         <p>
+                              學會成立之初，邀請許多外賓及專家進行教學。起初為了要鼓勵加入學會，所有的教學演講都是免費，後來因為學會經費有限，改成收費參加，迄今常年舉辦的活動包括初階班課程（例如文獻搜尋工作坊）、進階班課程（例如系統性回顧與統合分析工作坊）、師資班課程、學術年會等活動。學會還提供實證醫學教師師資認證，有完成足夠之教育訓練課程及實際進行實證醫學教授者，經學會審查通過即可頒發師資證書。
+                         </p>
+                    </li>
+
+                    <li data-index="8">
+                         <h2 data-year="2014">共同舉辦第3屆ISEHC國際實證健康照護學術年會</h2>
+                         <p>
+                              與考科藍台灣研究中心 (Cochrane Taiwan) 共同舉辦第3屆ISEHC (國際實證健康照護學術年會)：2014年11月06~09日在台大醫院國際會議中心舉辦，大會主題為
+                              「知識轉譯及醫病共同決定以優化健康：挑戰與全球在地化」Knowledge translation and shared-decision making for better
+                              health:
+                              challenge of glocalization，本次會議共計有來自24個國家和地區的實證專家學者約125人參與、500多人與會。
+                         </p>
+
+                         <p>
+                              會議重點包括：<br>
+                              <strong>--引進GRADE（Grading of Recommendations, Assessment, Development and
+                                   Evaluations）評核系統：</strong>
+                              <br>
+                              GRADE評核系統是一套國際標準化的工具，用於評估醫療證據的品質與形成臨床建議的強度。在會議中，由提出實證醫學概念的加拿大 Gordon Guyatt
+                              教授及中國的陳耀龍教授詳細介紹此系統，將GRADE的理念和實踐應用引進國內。GRADE評核系統的核心在於幫助臨床醫療團隊以高品質的證據為基礎，制訂更科學化與一致性的實證臨床指引，提升醫療品質，為醫療決策的科學化奠定重要基礎。
+                              <br><br>
+                              <strong>--推廣醫病共同決策（Shared Decision Making, SDM）觀念：</strong>
+                              <br>
+                              醫病共同決策是一種強調病人參與醫療決策過程的模式，讓病人與醫療團隊共同分享資訊，並根據病人的價值觀與偏好共同制定治療計劃。在本次會議中，由美國 Mayo Clinic 的
+                              Victor
+                              Montori 教授與澳洲 Lyndal Trevena
+                              教授深入講解SDM的核心理念與實施原則，並分享其在國際間的實踐經驗。SDM的推廣使醫療服務更加以病人為中心，強調尊重病人選擇，並促進醫病關係的信任與合作。本次會議的成果不僅促進了SDM在台灣的臨床實踐中逐步落實，還為提升醫療服務品質提供了全新的視野與方法。
+                         </p>
+                         <div class="pic_box">
+                              <img src="https://sydtfrank.github.io/tebma/page_history/img/07.jpg">
+                         </div>
+                    </li>
+
+                    <li data-index="9">
+                         <h2 data-year="2016">寓教於樂的礁溪SR工作坊（Edutainment）</h2>
+                         <p>
+                              2016年4月23日至24日，TEBMA首次於礁溪舉辦營隊式的SR工作坊。本次活動由當時核心課程發展暨師資培育委員會主任委員譚家偉老師所籌劃與設計，具備「星光夜談」等寓教於樂的特色活動，使學員在輕鬆的氛圍中獲益良多，堪稱當時的一項創舉。
+                         </p>
+                         <p class="meta_source">
+                              資料來源：施建安 (2016). 為什麼你要參加系統性文獻回顧研究進階研習工作坊. 台灣實證醫學學會會刊, 7(2), 7-10.
+                         </p>
+                         <div class="pic_box">
+                              <img src="https://sydtfrank.github.io/tebma/page_history/img/08.jpg">
+                         </div>
+                    </li>
+
+                    <li data-index="10">
+                         <h2 data-year="2016">首創實證醫學辯論賽</h2>
+                         <p>
+                              2016年8月27日，實證醫學年會於成功大學醫學院舉行，當年首次舉辦實證醫學辯論賽，由徐圭璋醫師擔任主持人。辯論主題為：「台灣教學醫院的臨床醫療人員人人人應學習實證醫學」。活動吸引眾多與會者熱烈參與，堪稱國內實證醫學辯論賽的創舉。
+                         </p>
+                         <p class="meta_source">
+                              資料來源：徐圭璋. (2016). 年會辯論會紀實. 台灣實證醫學學會會刊, 7(2), 14-15.
+                         </p>
+                    </li>
+
+                    <li data-index="11">
+                         <h2 data-year="2016">青年委員會之成立與發展</h2>
+                         <p>
+                              在2016年12月17日舉行的第五屆第五次理監事會議中，時任理事長陳杰峰提出籌設青年委員會的建議，獲得全體理監事一致同意。隨後，林揚笙醫師獲邀擔任首任青年委員會主任委員。青年委員會自成立以來表現活躍，逐漸成為台灣實證醫學會推動會務的重要動能與活力來源。
+                         </p>
+                         <p class="meta_source">
+                              資料來源：台灣實證醫學學會第五屆第五次理監事會議記錄
+                         </p>
+                    </li>
+
+                    <li data-index="12">
+                         <h2 data-year="2021">本會正式更名為「社團法人台灣實證醫學學會」</h2>
+                         <p>
+                              由社會團體改成社團法人：2021年05月14日改為「社團法人台灣實證醫學學會」。
+                              2021年5月14日，由社會團體改成社團法人，本會正式更名為「社團法人台灣實證醫學學會」。取得法人資格使學會得以將共有財產以學會名義登記，讓資產管理更加正規化與透明化；並藉由明列於章程內的財務管理及組織制度，提升透明度與外界信任。透過明確的職責分工及輪替制度，使學會運作更為順暢，邁向永續發展。
+                         </p>
+                    </li>
+
+                    <li data-index="13">
+                         <h2 data-year="2023">實證醫學跨領域合作與多元應用</h2>
+                         <p>
+                              實證醫學不僅適用於特定醫療專科，還能廣泛應用於不同領域，並且強調跨領域合作的重要性。本學會致力於促進實證醫學在多元領域中的應用，並積極與相關專業團體合作，提升醫療品質與實證研究水平。
+                         </p>
+
+                         <p>
+                              以下為本學會的重要合作案例：<br>
+                              --2020年08月22日與台灣醫學圖學館學會合作，共同辦理學術年會，透過圖書資訊領域的專業合作，強化實證醫學的資源整合與知識傳遞效能<br>
+                              --2023年07月01日與台灣實證護理學會於高雄榮微醫院共同舉辦「全國實證醫療照護年會」，推動實證醫療與護理領域的深度合作，促進跨領域交流與創新，並強化專業發展與實務應用。<br>
+                         </p>
+                         <p>
+                              透過這些跨領域合作，我們不僅展現了實證醫學的多元應用價值，更為未來的醫療照護發展開創嶄新格局。我們期待與更多專業領域攜手合作，共同推動實證健康照護的創新發展。
+                         </p>
+                    </li>
+
+                    <li data-index="14">
+                         <h2 data-year="2024">電子化作業</h2>
+                         <p>
+                              學會在2024年起，取消列印學會刊物及年會手冊，改成線上閱讀。
+                         </p>
+                    </li>
+
+                    <li data-index="15">
+                         <h2 data-year="2025">年會報到自動化作業</h2>
+                         <p>
+                              學會自2025年起，年會增加自動化報到手續，掃QR code即可串聯完成報到，縮短報到時要排隊等候時間。
+                         </p>
+                    </li>
+
+                    <li data-index="16">
+                         <h2 data-year="2025">「台灣實證醫學學會會刊」更名為「台灣實證醫學期刊」</h2>
+                         <p>
+                              2025年理監事會議通過正名，新名稱更能彰顯本學會發行之刊物具有實證研究，英文名稱不變依然為Evidence Counts。
+                         </p>
+                    </li>
+
+                    <li data-index="17">
+                         <h2 data-year="2026">「台灣實證醫學期刊」通過醫策會教學醫院評鑑學術性期刊</h2>
+                         <p>
+                              「台灣實證醫學期刊」於2026年通過醫策會「教學醫院評鑑學術性期刊」，新名稱更能彰顯本學會發行之刊物具有實證研究，英文名稱不變依然為Evidence Counts。
+                         </p>
+                    </li>
+               </ol>
+          </div>
+     </section>
+
+     <script>
+          $(document).ready(function () {
+               var timelines = $('.cd-horizontal-timeline'),
+                    eventsMinDistance = 150;
+
+               if (timelines.length > 0) {
+                    timelines.each(function () {
+                         var $this = $(this);
+                         var $navOl = $this.find('.events ol');
+                         var $contentLi = $this.find('.events-content ol li');
+
+                         $navOl.empty();
+
+                         // 💡 修改：改用簡單的 index 作為識別，移除舊有的 data-date 依存
+                         $contentLi.each(function (index) {
+                              var year = $(this).find('h2').data("year");
+                              var selectedClass = (index === 0) ? 'class="selected"' : '';
+                              var liHtml = '<li><a href="javascript:void(0);" data-index="' + index + '" ' + selectedClass + '>' + year + '</a></li>';
+                              $navOl.append(liHtml);
+                         });
+                    });
+
+                    initTimeline(timelines);
+               }
+
+               function initTimeline(timelines) {
+                    timelines.each(function () {
+                         var timeline = $(this),
+                              timelineComponents = {};
+                         timelineComponents['timelineWrapper'] = timeline.find('.events-wrapper');
+                         timelineComponents['eventsWrapper'] = timelineComponents['timelineWrapper'].children('.events');
+                         timelineComponents['fillingLine'] = timelineComponents['eventsWrapper'].children('.filling-line');
+                         timelineComponents['timelineEvents'] = timelineComponents['eventsWrapper'].find('a');
+                         timelineComponents['timelineNavigation'] = timeline.find('.cd-timeline-navigation');
+                         timelineComponents['eventsContent'] = timeline.children('.events-content');
+
+                         setDatePosition(timelineComponents, eventsMinDistance);
+
+                         var timelineTotWidth = setTimelineWidth(timelineComponents, eventsMinDistance);
+
+                         timeline.addClass('loaded');
+                         timelineComponents['timelineNavigation'].find('.prev').addClass('inactive');
+
+                         setTimeout(function () {
+                              var firstEvent = timelineComponents['eventsWrapper'].find('a.selected');
+                              if (firstEvent.length > 0) {
+                                   updateFilling(firstEvent, timelineComponents['fillingLine'], timelineTotWidth);
+                                   var currentTimelineWidth = Number(timelineComponents['timelineWrapper'].css('width').replace('px', ''));
+                                   var eventStyle = window.getComputedStyle(firstEvent.get(0), null);
+                                   var eventLeft = Number(eventStyle.getPropertyValue("left").replace('px', ''));
+                                   var targetValue = -eventLeft + 60;
+                                   translateTimeline(timelineComponents, targetValue, currentTimelineWidth - timelineTotWidth);
+                              }
+                         }, 100);
+
+                         timelineComponents['timelineNavigation'].on('click', '.next', function (event) {
+                              event.preventDefault();
+                              updateSlide(timelineComponents, timelineTotWidth, 'next');
+                         });
+
+                         timelineComponents['timelineNavigation'].on('click', '.prev', function (event) {
+                              event.preventDefault();
+                              updateSlide(timelineComponents, timelineTotWidth, 'prev');
+                         });
+
+                         timelineComponents['eventsWrapper'].on('click', 'a', function (event) {
+                              event.preventDefault();
+                              timelineComponents['timelineEvents'].removeClass('selected');
+                              $(this).addClass('selected');
+                              updateOlderEvents($(this));
+                              updateFilling($(this), timelineComponents['fillingLine'], timelineTotWidth);
+                              updateVisibleContent($(this), timelineComponents['eventsContent']);
+                         });
+                    });
+               }
+
+               function updateSlide(timelineComponents, timelineTotWidth, string) {
+                    var currentSelected = timelineComponents['eventsWrapper'].find('a.selected');
+                    var targetEvent = (string === 'next')
+                         ? currentSelected.parent('li').next('li').children('a')
+                         : currentSelected.parent('li').prev('li').children('a');
+
+                    if (targetEvent.length > 0) {
+                         targetEvent.click();
+                         updateTimelinePosition(string, targetEvent, timelineComponents, timelineTotWidth);
+                    }
+               }
+
+               function updateTimelinePosition(string, event, timelineComponents, timelineTotWidth) {
+                    var eventStyle = window.getComputedStyle(event.get(0), null),
+                         eventLeft = Number(eventStyle.getPropertyValue("left").replace('px', '')),
+                         timelineWidth = Number(timelineComponents['timelineWrapper'].css('width').replace('px', '')),
+                         timelineTotWidth = Number(timelineComponents['eventsWrapper'].css('width').replace('px', ''));
+                    var timelineTranslate = getTranslateValue(timelineComponents['eventsWrapper']);
+
+                    if ((string == 'next' && eventLeft > timelineWidth - timelineTranslate) || (string == 'prev' && eventLeft < -timelineTranslate)) {
+                         translateTimeline(timelineComponents, -eventLeft + timelineWidth / 2, timelineWidth - timelineTotWidth);
+                    }
+               }
+
+               function translateTimeline(timelineComponents, value, totWidth) {
+                    var eventsWrapper = timelineComponents['eventsWrapper'].get(0);
+                    value = (value > 0) ? 0 : value;
+                    value = (!(typeof totWidth === 'undefined') && value < totWidth) ? totWidth : value;
+                    setTransformValue(eventsWrapper, 'translateX', value + 'px');
+                    (value == 0) ? timelineComponents['timelineNavigation'].find('.prev').addClass('inactive') : timelineComponents['timelineNavigation'].find('.prev').removeClass('inactive');
+                    (value == totWidth) ? timelineComponents['timelineNavigation'].find('.next').addClass('inactive') : timelineComponents['timelineNavigation'].find('.next').removeClass('inactive');
+               }
+
+               function updateFilling(selectedEvent, filling, totWidth) {
+                    var eventStyle = window.getComputedStyle(selectedEvent.get(0), null),
+                         eventLeft = eventStyle.getPropertyValue("left"),
+                         eventWidth = eventStyle.getPropertyValue("width");
+                    eventLeft = Number(eventLeft.replace('px', '')) + Number(eventWidth.replace('px', '')) / 2;
+                    var scaleValue = eventLeft / totWidth;
+                    setTransformValue(filling.get(0), 'scaleX', scaleValue);
+               }
+
+               function setDatePosition(timelineComponents, min) {
+                    timelineComponents['timelineEvents'].each(function (i) {
+                         $(this).css('left', (i + 1) * min + 'px');
+                    });
+               }
+
+               function setTimelineWidth(timelineComponents, width) {
+                    // 💡 修改：改用點標總數 (length) 來決定寬度，移除了原本 parseDate 的陣列相依
+                    var totalWidth = (timelineComponents['timelineEvents'].length + 2) * width;
+                    timelineComponents['eventsWrapper'].css('width', totalWidth + 'px');
+                    updateFilling(timelineComponents['timelineEvents'].eq(0), timelineComponents['fillingLine'], totalWidth);
+                    return totalWidth;
+               }
+
+               function updateVisibleContent(event, eventsContent) {
+                    var eventIndex = event.data('index'),
+                         visibleContent = eventsContent.find('.selected'),
+                         selectedContent = eventsContent.find('[data-index="' + eventIndex + '"]'),
+                         selectedContentHeight = selectedContent.height();
+
+                    if (selectedContent.index() > visibleContent.index()) {
+                         var classEnetering = 'selected enter-right', classLeaving = 'leave-left';
+                    } else {
+                         var classEnetering = 'selected enter-left', classLeaving = 'leave-right';
+                    }
+
+                    selectedContent.attr('class', classEnetering);
+                    visibleContent.attr('class', classLeaving).one('webkitAnimationEnd oanimationend msAnimationEnd animationend', function () {
+                         visibleContent.removeClass('leave-right leave-left');
+                         selectedContent.removeClass('enter-left enter-right');
+                    });
+                    eventsContent.css('height', selectedContentHeight + 'px');
+               }
+
+               function updateOlderEvents(event) {
+                    event.parent('li').prevAll('li').children('a').addClass('older-event').end().end().nextAll('li').children('a').removeClass('older-event');
+                    var $navigation = $('.cd-timeline-navigation');
+                    if (event.parent('li').is(':first-child')) {
+                         $navigation.find('.prev').addClass('inactive');
+                    } else {
+                         $navigation.find('.prev').removeClass('inactive');
+                    }
+                    if (event.parent('li').is(':last-child')) {
+                         $navigation.find('.next').addClass('inactive');
+                    } else {
+                         $navigation.find('.next').removeClass('inactive');
+                    }
+               }
+
+               function getTranslateValue(timeline) {
+                    var timelineStyle = window.getComputedStyle(timeline.get(0), null),
+                         timelineTranslate = timelineStyle.getPropertyValue("-webkit-transform") ||
+                              timelineStyle.getPropertyValue("transform");
+
+                    if (timelineTranslate.indexOf('(') >= 0) {
+                         var values = timelineTranslate.split('(')[1].split(')')[0].split(',');
+                         var translateValue = values[4];
+                    } else {
+                         var translateValue = 0;
+                    }
+                    return Number(translateValue);
+               }
+
+               function setTransformValue(element, property, value) {
+                    element.style["-webkit-transform"] = property + "(" + value + ")";
+                    element.style["transform"] = property + "(" + value + ")";
+               }
+          });
+
+          if (window.self !== window.top) {
+               $(window).on('load', function () {
+                    var resizeObserver = new ResizeObserver(function (entries) {
+                         try {
+                              var currentHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+                              var parentIframe = window.parent.document.getElementById('content');
+                              if (parentIframe) { parentIframe.style.height = currentHeight + 'px'; }
+                         } catch (e) {
+                              console.warn("無法調整父視窗高度：", e);
+                         }
+                    });
+                    resizeObserver.observe(document.body);
+               });
+          }
+     </script>
+</body>
+
+</html>
